@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\UserRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Class UserCrudController
@@ -34,44 +35,102 @@ class UserCrudController extends CrudController
     /**
      * Define what happens when the List operation is loaded.
      * 
-     * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
      * @return void
      */
     protected function setupListOperation()
     {
-        CRUD::setFromDb(); // set columns from db columns.
-
-        /**
-         * Columns can be defined using the fluent syntax:
-         * - CRUD::column('price')->type('number');
-         */
+        CRUD::column('name')->type('text')->label('Full Name');
+        CRUD::column('email')->type('email')->label('Email');
+        CRUD::column('created_at')->type('datetime')->label('Registered At');
+        CRUD::removeColumn('password'); // Hide password from the list
     }
 
     /**
      * Define what happens when the Create operation is loaded.
      * 
-     * @see https://backpackforlaravel.com/docs/crud-operation-create
      * @return void
      */
     protected function setupCreateOperation()
     {
         CRUD::setValidation(UserRequest::class);
-        CRUD::setFromDb(); // set fields from db columns.
 
-        /**
-         * Fields can be defined using the fluent syntax:
-         * - CRUD::field('price')->type('number');
-         */
+        CRUD::addField([
+            'name' => 'name',
+            'type' => 'text',
+            'label' => 'Full Name'
+        ]);
+
+        CRUD::addField([
+            'name' => 'email',
+            'type' => 'email',
+            'label' => 'Email'
+        ]);
+
+        CRUD::addField([
+            'name' => 'password',
+            'type' => 'password',
+            'label' => 'Password'
+        ]);
     }
 
     /**
      * Define what happens when the Update operation is loaded.
      * 
-     * @see https://backpackforlaravel.com/docs/crud-operation-update
      * @return void
      */
     protected function setupUpdateOperation()
     {
-        $this->setupCreateOperation();
+        CRUD::setValidation(UserRequest::class);
+
+        CRUD::addField([
+            'name' => 'name',
+            'type' => 'text',
+            'label' => 'Full Name'
+        ]);
+
+        CRUD::addField([
+            'name' => 'email',
+            'type' => 'email',
+            'label' => 'Email'
+        ]);
+
+        CRUD::addField([
+            'name' => 'password',
+            'type' => 'password',
+            'label' => 'New Password (Leave blank to keep current password)',
+            'attributes' => [
+                'autocomplete' => 'new-password'
+            ]
+        ]);
+    }
+
+    /**
+     * Hash password before storing user.
+     */
+    public function store()
+    {
+        $request = $this->crud->validateRequest();
+
+        if ($request->filled('password')) {
+            $request->merge(['password' => Hash::make($request->password)]);
+        }
+
+        return $this->traitStore();
+    }
+
+    /**
+     * Hash password before updating user.
+     */
+    public function update()
+    {
+        $request = $this->crud->validateRequest();
+
+        if ($request->filled('password')) {
+            $request->merge(['password' => Hash::make($request->password)]);
+        } else {
+            $request->request->remove('password');
+        }
+
+        return $this->traitUpdate();
     }
 }
