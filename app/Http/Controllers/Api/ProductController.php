@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 class ProductController extends Controller
 {
     /**
-     * Get all products with pagination
+     * Get all products with pagination (Requires authentication)
      */
     public function index()
     {
@@ -23,6 +23,21 @@ class ProductController extends Controller
             'message' => 'Products retrieved successfully',
             'data' => $products
         ]);
+    }
+
+    /**
+     * Public API: Get all products for web display (No authentication required)
+     */
+    public function getPublicProducts()
+    {
+        $products = Product::with(['category', 'seller'])->get();
+
+        return response()->json([
+            'status' => 'ok',
+            'status_code' => 200,
+            'message' => 'Public product list retrieved successfully',
+            'data' => $products
+        ], 200);
     }
 
     /**
@@ -78,7 +93,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Show a single product
+     * Show a single product (Requires authentication)
      */
     public function show($product_id)
     {
