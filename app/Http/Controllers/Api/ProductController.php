@@ -32,7 +32,7 @@ class ProductController extends Controller
     {
         $products = Product::with(['category', 'seller'])->get()->map(function ($product) {
             return [
-                'id' => $product->id,
+                'id' => $product->product_id,
                 'product_name' => $product->product_name,
                 'priceUSD' => $product->priceUSD,
                 'category' => $product->category->name,
