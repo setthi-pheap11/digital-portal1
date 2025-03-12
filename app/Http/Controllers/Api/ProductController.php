@@ -30,8 +30,19 @@ class ProductController extends Controller
      */
     public function getPublicProducts()
     {
-        $products = Product::with(['category', 'seller'])->get();
-
+        $products = Product::with(['category', 'seller'])->get()->map(function ($product) {
+            return [
+                'id' => $product->id,
+                'product_name' => $product->product_name,
+                'priceUSD' => $product->priceUSD,
+                'category' => $product->category->name,
+                'seller' => $product->seller->name,
+                'image_url' => $product->image_url, // ✅ Now returns correct MinIO URL
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+            ];
+        });
+    
         return response()->json([
             'status' => 'ok',
             'status_code' => 200,

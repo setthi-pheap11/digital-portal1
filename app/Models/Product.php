@@ -5,7 +5,7 @@ use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-
+use Illuminate\Support\Facades\Storage;
 class Product extends Model
 {
     use CrudTrait;
@@ -35,6 +35,19 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
+    }
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? Storage::disk('s3')->url("digital/{$this->image}") : null;
+    }
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->product_id)) {
+                $model->product_id = (string) Str::uuid(); // ✅ Auto-generate UUID if not set
+            }
+        });
     }
 }
 
