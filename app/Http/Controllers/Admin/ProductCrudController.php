@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\ProductRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Support\Facades\Storage;
+
 
 /**
  * Class ProductCrudController
@@ -32,7 +34,23 @@ class ProductCrudController extends CrudController
             ->entity('category')->attribute('name');
         CRUD::column('seller_id')->label('Seller')->type('select')
             ->entity('seller')->attribute('name');
-        CRUD::column('image')->label('Image')->type('image');
+      
+
+        CRUD::column('image')->label('Image')
+        ->type('custom_html') 
+        ->escaped(false) 
+        ->value(function ($entry) {
+            if ($entry->image) {
+                
+                $imageUrl = Storage::disk('s3')->url("digital/{$entry->image}");
+                return "<img src='{$imageUrl}' width='100' height='100' style='border-radius:5px;'/>";
+            }
+            return '-';
+        });
+    
+    
+        
+
         CRUD::column('created_at')->label('Created At')->type('datetime');
     }
 
@@ -50,9 +68,19 @@ class ProductCrudController extends CrudController
         CRUD::field('seller_id')->label('Seller')->type('select')
             ->entity('seller')->model('App\Models\User')->attribute('name');
 
-        // Image upload field (stores in /storage/app/public/products)
-        CRUD::field('image')->label('Product Image')->type('upload')
-            ->upload(true)->disk('public')->prefix('products'); // Saves in /storage/app/public/products
+            CRUD::field('image')->label('Product Image')->type('upload')
+            ->disk('s3') 
+            ->upload(true)
+            ->withFiles([
+                'disk' => 's3', 
+                'path' => 'products',
+                'visibility' => 'public'
+            ]);
+        
+        
+      
+    
+
     }
 
     protected function setupUpdateOperation()
