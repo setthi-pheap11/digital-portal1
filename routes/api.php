@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
-
+use App\Http\Controllers\Api\PublicCategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,5 +48,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{product_id}', [ProductController::class, 'destroy']); // Delete product (Only Seller)
     });
 });
+// Get all categories (Public)
+Route::get('/public/categories', [PublicCategoryController::class, 'index']);
+
+// Get all products inside a category (Public)
+Route::get('/public/categories/{category_id}/products', [PublicCategoryController::class, 'getProductsByCategory']);
 
 
