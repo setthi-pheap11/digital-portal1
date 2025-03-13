@@ -185,4 +185,7 @@ return [
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
+    'image_url' => env('IMAGE_BASE_URL', 'http://127.0.0.1:8000/storage'),
+
+
 ];
