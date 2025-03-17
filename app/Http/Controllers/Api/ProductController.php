@@ -34,10 +34,12 @@ class ProductController extends Controller
             return [
                 'id' => $product->product_id,
                 'product_name' => $product->product_name,
+                'product_detail' => $product->product_detail,
+                'product_claim' => $product->product_claim,
                 'priceUSD' => $product->priceUSD,
                 'category' => $product->category->name,
                 'seller' => $product->seller->name,
-                'image_url' => $product->image_url, // ✅ Now returns correct MinIO URL
+                'image_url' => $product->image_url,
                 'created_at' => $product->created_at,
                 'updated_at' => $product->updated_at,
             ];
@@ -70,6 +72,7 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'product_name' => 'required|string|max:255',
             'product_detail' => 'required|string',
+            'product_claim' => 'required|string',
             'priceUSD' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'image' => 'nullable|string',
@@ -89,6 +92,7 @@ class ProductController extends Controller
             'product_id' => Str::uuid(),
             'product_name' => $request->product_name,
             'product_detail' => $request->product_detail,
+            'product_claim' => $request->product_claim,
             'priceUSD' => $request->priceUSD,
             'category_id' => $request->category_id,
             'seller_id' => $seller->id,
@@ -157,6 +161,7 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'product_name' => 'sometimes|string|max:255',
             'product_detail' => 'sometimes|string',
+            'product_claim' => 'sometimes|string',
             'priceUSD' => 'sometimes|numeric|min:0',
             'category_id' => 'sometimes|exists:categories,id',
             'image' => 'nullable|string',

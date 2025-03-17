@@ -30,6 +30,8 @@ class ProductCrudController extends CrudController
     {
         CRUD::column('product_name')->label('Product Name')->type('text');
         CRUD::column('priceUSD')->label('Price (USD)')->type('number');
+        CRUD::column('product_detail')->label('Product Detail')->type('text');
+        CRUD::column('product_claim')->label('Product Claim')->type('text');
         CRUD::column('category_id')->label('Category')->type('select')
             ->entity('category')->attribute('name');
         CRUD::column('seller_id')->label('Seller')->type('select')
@@ -60,6 +62,7 @@ class ProductCrudController extends CrudController
 
         CRUD::field('product_name')->label('Product Name')->type('text');
         CRUD::field('product_detail')->label('Product Detail')->type('textarea');
+        CRUD::field('product_claim')->label('Product claim')->type('textarea');
         CRUD::field('priceUSD')->label('Price (USD)')->type('number')->attributes(['step' => '0.01']);
         
         CRUD::field('category_id')->label('Category')->type('select')

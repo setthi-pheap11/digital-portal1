@@ -19,6 +19,7 @@ class Product extends Model
         'product_id',
         'product_name',
         'product_detail',
+        'product_claim',
         'priceUSD',
         'category_id',
         'seller_id',
@@ -45,7 +46,7 @@ class Product extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->product_id)) {
-                $model->product_id = (string) Str::uuid(); // ✅ Auto-generate UUID if not set
+                $model->product_id = (string) Str::uuid();
             }
         });
     }
