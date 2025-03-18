@@ -26,23 +26,30 @@ class ProductController extends Controller
     }
 
     /**
-     * Public API: Get all products for web display (No authentication required)
+     * Public API: Get all products for web display with pagination (No authentication required)
      */
     public function getPublicProducts()
     {
-        $products = Product::with(['category', 'seller'])->get()->map(function ($product) {
+        $imageBaseUrl = config('app.image_url', url('storage'));
+
+        $products = Product::with(['category', 'seller'])->paginate(20);
+
+        // Modify product data to format image URL
+        $products->getCollection()->transform(function ($product) use ($imageBaseUrl) {
             return [
                 'id' => $product->product_id,
                 'product_name' => $product->product_name,
+                'product_detail' => $product->product_detail,
+                'product_claim' => $product->product_claim,
                 'priceUSD' => $product->priceUSD,
-                'category' => $product->category->name,
-                'seller' => $product->seller->name,
-                'image_url' => $product->image_url, // ✅ Now returns correct MinIO URL
+                'category' => $product->category->name ?? null,
+                'seller' => $product->seller->name ?? null,
+                'image_url' => $product->image ? $imageBaseUrl . '/' . ltrim($product->image, '/') : null,
                 'created_at' => $product->created_at,
                 'updated_at' => $product->updated_at,
             ];
         });
-    
+
         return response()->json([
             'status' => 'ok',
             'status_code' => 200,
@@ -52,63 +59,15 @@ class ProductController extends Controller
     }
 
     /**
-     * Store a new product
+     * Public API: Get product detail by ID (No authentication required)
      */
-    public function store(Request $request)
+    public function getPublicProductDetail($product_id)
     {
-        $seller = $request->user();
-    
-        if (!$seller || $seller->role !== 'seller') {
-            return response()->json([
-                'status' => 'error',
-                'status_code' => 403,
-                'error_code' => 'unauthorized',
-                'error_message' => 'Only sellers can add products.'
-            ], 403);
-        }
-    
-        $validator = Validator::make($request->all(), [
-            'product_name' => 'required|string|max:255',
-            'product_detail' => 'required|string',
-            'priceUSD' => 'required|numeric|min:0',
-            'category_id' => 'required|exists:categories,id',
-            'image' => 'nullable|string',
-        ]);
-    
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'status_code' => 422,
-                'error_code' => 'validation_failed',
-                'error_message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        $imageBaseUrl = config('app.image_url', url('storage'));
 
-        $product = Product::create([
-            'product_id' => Str::uuid(),
-            'product_name' => $request->product_name,
-            'product_detail' => $request->product_detail,
-            'priceUSD' => $request->priceUSD,
-            'category_id' => $request->category_id,
-            'seller_id' => $seller->id,
-            'image' => $request->image,
-        ]);
-    
-        return response()->json([
-            'status' => 'ok',
-            'status_code' => 201,
-            'message' => 'Product created successfully',
-            'data' => $product
-        ], 201);
-    }
-
-    /**
-     * Show a single product (Requires authentication)
-     */
-    public function show($product_id)
-    {
-        $product = Product::with('category', 'seller')->where('product_id', $product_id)->first();
+        $product = Product::with(['category', 'seller'])
+            ->where('product_id', $product_id)
+            ->first();
 
         if (!$product) {
             return response()->json([
@@ -123,45 +82,46 @@ class ProductController extends Controller
             'status' => 'ok',
             'status_code' => 200,
             'message' => 'Product details retrieved successfully',
-            'data' => $product
+            'data' => [
+                'id' => $product->product_id,
+                'product_name' => $product->product_name,
+                'product_detail' => $product->product_detail,
+                'product_claim' => $product->product_claim,
+                'priceUSD' => $product->priceUSD,
+                'category' => $product->category->name ?? null,
+                'seller' => $product->seller->name ?? null,
+                'image_url' => $product->image ? $imageBaseUrl . '/' . ltrim($product->image, '/') : null,
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+            ]
         ], 200);
     }
 
     /**
-     * Update a product
+     * Store a new product
      */
-    public function update(Request $request, $product_id)
+    public function store(Request $request)
     {
-        $product = Product::where('product_id', $product_id)->first();
-    
-        if (!$product) {
-            return response()->json([
-                'status' => 'error',
-                'status_code' => 404,
-                'error_code' => 'not_found',
-                'error_message' => 'Product not found'
-            ], 404);
-        }
-    
-        // Ensure the authenticated user is the seller of the product
         $seller = $request->user();
-        if (!$seller || $seller->role !== 'seller' || $seller->id !== $product->seller_id) {
+
+        if (!$seller || $seller->role !== 'seller') {
             return response()->json([
                 'status' => 'error',
                 'status_code' => 403,
                 'error_code' => 'unauthorized',
-                'error_message' => 'Unauthorized. Only the product owner can update it.'
+                'error_message' => 'Only sellers can add products.'
             ], 403);
         }
-    
+
         $validator = Validator::make($request->all(), [
-            'product_name' => 'sometimes|string|max:255',
-            'product_detail' => 'sometimes|string',
-            'priceUSD' => 'sometimes|numeric|min:0',
-            'category_id' => 'sometimes|exists:categories,id',
+            'product_name' => 'required|string|max:255',
+            'product_detail' => 'required|string',
+            'product_claim' => 'required|string',
+            'priceUSD' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:categories,id',
             'image' => 'nullable|string',
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -171,50 +131,31 @@ class ProductController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-    
-        $product->update($request->all());
-    
+
+        $product = Product::create([
+            'product_id' => Str::uuid(),
+            'product_name' => $request->product_name,
+            'product_detail' => $request->product_detail,
+            'product_claim' => $request->product_claim,
+            'priceUSD' => $request->priceUSD,
+            'category_id' => $request->category_id,
+            'seller_id' => $seller->id,
+            'image' => $request->image,
+        ]);
+
         return response()->json([
             'status' => 'ok',
-            'status_code' => 200,
-            'message' => 'Product updated successfully',
+            'status_code' => 201,
+            'message' => 'Product created successfully',
             'data' => $product
-        ], 200);
+        ], 201);
     }
 
     /**
-     * Delete a product
+     * Show a single product (Requires authentication)
      */
-    public function destroy(Request $request, $product_id)
+    public function show($product_id)
     {
-        $product = Product::where('product_id', $product_id)->first();
-    
-        if (!$product) {
-            return response()->json([
-                'status' => 'error',
-                'status_code' => 404,
-                'error_code' => 'not_found',
-                'error_message' => 'Product not found'
-            ], 404);
-        }
-    
-        // Ensure the authenticated user is the seller
-        $seller = $request->user();
-        if (!$seller || $seller->role !== 'seller' || $seller->id !== $product->seller_id) {
-            return response()->json([
-                'status' => 'error',
-                'status_code' => 403,
-                'error_code' => 'unauthorized',
-                'error_message' => 'Unauthorized. Only the product owner can delete it.'
-            ], 403);
-        }
-    
-        $product->delete();
-    
-        return response()->json([
-            'status' => 'ok',
-            'status_code' => 200,
-            'message' => 'Product deleted successfully'
-        ], 200);
+        return $this->getPublicProductDetail($product_id);
     }
 }
