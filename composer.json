@@ -13,7 +13,8 @@
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "league/flysystem": "^3.29",
-        "league/flysystem-aws-s3-v3": "3.29"
+        "league/flysystem-aws-s3-v3": "3.29",
+        "paypal/rest-api-sdk-php": "^1.6"
     },
     "require-dev": {
         "backpack/generators": "^4.0",

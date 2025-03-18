@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\PublicCategoryController;
+use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PayPalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,13 +34,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
 });
 
-
 Route::middleware(['auth:sanctum', 'seller'])->group(function () {
     Route::get('/seller-dashboard', function () {
         return response()->json(['message' => 'Welcome, Seller! ']);
     });
 });
-
+Route::get('/public/products/{product_id}', [ProductController::class, 'getPublicProductDetail']);
 Route::get('/public/products', [ProductController::class, 'getPublicProducts']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('products')->group(function () {
@@ -55,3 +57,18 @@ Route::get('/public/categories', [PublicCategoryController::class, 'index']);
 Route::get('/public/categories/{category_id}/products', [PublicCategoryController::class, 'getProductsByCategory']);
 
 
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Cart Routes
+    Route::post('cart/add', [CartController::class, 'addToCart']);
+    Route::get('cart', [CartController::class, 'getCart']);
+    Route::delete('cart/{id}', [CartController::class, 'removeFromCart']);
+
+    // Order Routes
+    Route::post('order/place', [OrderController::class, 'placeOrder']);
+
+    // PayPal Routes
+    Route::get('paypal/pay/{orderId}', [PayPalController::class, 'payWithPayPal']);
+    Route::get('paypal/success/{orderId}', [PayPalController::class, 'paypalSuccess']);
+});
