@@ -13,10 +13,12 @@ class ProductController extends Controller
     /**
      * Get all products with pagination (Requires authentication)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category', 'seller')->paginate(20);
-
+        $perPage = $request->query('per_page', 20); // Default to 20 if not specified
+    
+        $products = Product::with('category', 'seller')->paginate($perPage);
+    
         return response()->json([
             'status' => 'ok',
             'status_code' => 200,
@@ -28,13 +30,14 @@ class ProductController extends Controller
     /**
      * Public API: Get all products for web display with pagination (No authentication required)
      */
-    public function getPublicProducts()
+    public function getPublicProducts(Request $request)
     {
+        $perPage = $request->query('per_page', 20); // Default to 20
+    
         $imageBaseUrl = config('app.image_url', url('storage'));
-
-        $products = Product::with(['category', 'seller'])->paginate(20);
-
-        // Modify product data to format image URL
+    
+        $products = Product::with(['category', 'seller'])->paginate($perPage);
+    
         $products->getCollection()->transform(function ($product) use ($imageBaseUrl) {
             return [
                 'id' => $product->product_id,
@@ -49,14 +52,15 @@ class ProductController extends Controller
                 'updated_at' => $product->updated_at,
             ];
         });
-
+    
         return response()->json([
             'status' => 'ok',
             'status_code' => 200,
             'message' => 'Public product list retrieved successfully',
             'data' => $products
-        ], 200);
+        ]);
     }
+    
 
     /**
      * Public API: Get product detail by ID (No authentication required)
