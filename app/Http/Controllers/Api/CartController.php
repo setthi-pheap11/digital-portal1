@@ -46,13 +46,24 @@ class CartController extends Controller
 
         return response()->json(['status' => 'ok', 'status_code' => 200, 'message' => 'Product added to cart', 'data' => $cart]);
     }
+    
+
 
     public function viewCart()
     {
+        $imageBaseUrl = config('app.image_url');
         $cartItems = Cart_orders_tables::with('product')
             ->where('user_id', Auth::id())
             ->where('status', 'cart')
             ->get();
+            $cartItems = $cartItems->map(function ($item) use ($imageBaseUrl) {
+                if ($item->product && $item->product->image) {
+                    $item->product->image = $imageBaseUrl . '/' . ltrim($item->product->image, '/');
+                } else {
+                    $item->product->image = null;
+                }
+                return $item;
+            });
 
         return response()->json(['status' => 'ok', 'status_code' => 200, 'message' => 'Cart items retrieved', 'data' => $cartItems]);
     }
@@ -112,7 +123,17 @@ class CartController extends Controller
             $item->status = 'ordered';
             $item->save();
         }
-
+        $imageBaseUrl = config('app.image_url');
+        
+        // Modify cart item product image URLs
+        $cartItems = $cartItems->map(function ($item) use ($imageBaseUrl) {
+            if ($item->product && $item->product->image) {
+            $item->product->image = $imageBaseUrl . '/' . ltrim($item->product->image, '/');
+            } else {
+            $item->product->image = null;
+            }
+            return $item;
+        });
         $purchasedProducts = $cartItems->map(function ($item) {
             return [
                 'seller' => $item->product->seller->name ?? null,
@@ -157,32 +178,37 @@ class CartController extends Controller
     return app(PayPalController::class)->payWithPayPal($cartItems->first()->id);
 }
 
-    public function orderHistory()
-    {
-        $orders = Cart_orders_tables::with('product')
-            ->where('user_id', Auth::id())
-            ->where('status', 'ordered')
-            ->orderBy('created_at', 'desc')
-            ->get();
+public function orderHistory()
+{
+    $imageBaseUrl = config('app.image_url');
+    $orders = Cart_orders_tables::with('product')
+        ->where('user_id', Auth::id())
+        ->where('status', 'ordered')
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        $data = $orders->map(function ($item) {
-            return [
-                'product_name' => $item->product->product_name,
-                'product_detail' => $item->product->product_detail,
-                'product_claim' => $item->product->product_claim, // ✅ Only visible here
-                'price' => $item->product->priceUSD,
-                'image' => $item->product->image,
-                'ordered_at' => $item->updated_at
-            ];
-        });
+    $data = $orders->map(function ($item) use ($imageBaseUrl) {
+        return [
+            'seller' => $item->product->seller->name ?? null,
+            'product_name' => $item->product->product_name ?? null,
+            'product_detail' => $item->product->product_detail ?? null,
+            'product_claim' => $item->product->product_claim ?? null, 
+            'price' => $item->product->priceUSD ?? null,
+            'image' => $item->product && $item->product->image 
+                ? $imageBaseUrl . '/' . ltrim($item->product->image, '/') 
+                : null,
+            'ordered_at' => $item->updated_at
+        ];
+    });
 
-        return response()->json([
-            'status' => 'ok',
-            'status_code' => 200,
-            'message' => 'Order history retrieved',
-            'data' => $data
-        ]);
-    }
+    return response()->json([
+        'status' => 'ok',
+        'status_code' => 200,
+        'message' => 'Order history retrieved',
+        'data' => $data
+    ]);
+}
+
 
     public function adminOrders()
     {
