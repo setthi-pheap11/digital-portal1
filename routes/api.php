@@ -57,18 +57,22 @@ Route::get('/public/categories', [PublicCategoryController::class, 'index']);
 Route::get('/public/categories/{category_id}/products', [PublicCategoryController::class, 'getProductsByCategory']);
 
 
-
-
 Route::middleware('auth:sanctum')->group(function () {
-    // Cart Routes
-    Route::post('cart/add', [CartController::class, 'addToCart']);
-    Route::get('cart', [CartController::class, 'getCart']);
-    Route::delete('cart/{id}', [CartController::class, 'removeFromCart']);
-
-    // Order Routes
-    Route::post('order/place', [OrderController::class, 'placeOrder']);
-
+    Route::post('/cart/add', [CartController::class, 'addToCart']);
+    Route::get('/cart/view', [CartController::class, 'viewCart']);
+    Route::post('/cart/update', [CartController::class, 'updateQuantity']);
+    Route::delete('/cart/remove/{product_id}', [CartController::class, 'removeFromCart']);
+    Route::post('/cart/place-order', [CartController::class, 'placeOrder']);
+    Route::get('/cart/orders', [CartController::class, 'orderHistory']);
+    Route::get('/admin/orders', [CartController::class, 'adminOrders']);
     // PayPal Routes
     Route::get('paypal/pay/{orderId}', [PayPalController::class, 'payWithPayPal']);
     Route::get('paypal/success/{orderId}', [PayPalController::class, 'paypalSuccess']);
+});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/cart/prepare-order', [App\Http\Controllers\Api\CartController::class, 'preparePayPalOrder']);
+    Route::get('/paypal/success/{orderId}', [App\Http\Controllers\Api\PayPalController::class, 'paypalSuccess']);
+    Route::get('/paypal/cancel', function () {
+        return response()->json(['message' => 'Payment cancelled']);
+    });
 });
