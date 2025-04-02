@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('cart_orders_tables', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->decimal('total_price', 8, 2);
+            $table->string('status')->default('pending');
             $table->uuid('product_id');
             $table->integer('quantity');
+            $table->string('payment_id')->nullable();
             $table->timestamps();
         });
         Schema::create('orders', function (Blueprint $table) {
