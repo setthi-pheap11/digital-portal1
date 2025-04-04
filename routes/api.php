@@ -76,3 +76,6 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['message' => 'Payment cancelled']);
     });
 });
+use App\Http\Controllers\Api\GoogleLoginController;
+
+Route::post('auth/google', [GoogleLoginController::class, 'googleLogin']);

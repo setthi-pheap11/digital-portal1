@@ -42,6 +42,15 @@ class UserCrudController extends CrudController
         CRUD::column('name')->type('text')->label('Full Name');
         CRUD::column('email')->type('email')->label('Email');
         CRUD::column('created_at')->type('datetime')->label('Registered At');
+        CRUD::column('updated_at')->type('datetime')->label('Updated At');
+        CRUD::column('role')->type('select_from_array')->label('Role')
+            ->options([
+                'admin' => 'Admin',
+                'user' => 'User',
+                // Add other roles as needed
+            ]);
+        CRUD::column('google_id')->type('text')->label('Google ID');
+        CRUD::column('card_number')->type('text')->label('Card Number');
         CRUD::removeColumn('password'); // Hide password from the list
     }
 
@@ -71,7 +80,33 @@ class UserCrudController extends CrudController
             'type' => 'password',
             'label' => 'Password'
         ]);
+        CRUD::addField([
+            'name' => 'google_id',
+            'type' => 'text',
+            'label' => 'Google ID'
+        ]);
+        // Add the role field
+        CRUD::addField([
+            'name' => 'role',
+            'type' => 'select_from_array',
+            'label' => 'Role',
+            'options' => [
+                'admin' => 'Admin',
+                'user' => 'User',
+                // Add other roles as needed
+            ],
+            'allows_null' => false,
+            'default' => 'user', // Set default role to user
+        ]);
+    
+        CRUD::addField([
+            'name' => 'card_number',
+            'type' => 'text',
+            'label' => 'Card Number'
+        ]);
     }
+    
+  
 
     /**
      * Define what happens when the Update operation is loaded.
@@ -102,6 +137,29 @@ class UserCrudController extends CrudController
                 'autocomplete' => 'new-password'
             ]
         ]);
+        CRUD::addField([
+            'name' => 'google_id',
+            'type' => 'text',
+            'label' => 'Google ID'
+        ]);
+        // Add the role field
+        CRUD::addField([
+            'name' => 'role',
+            'type' => 'select_from_array',
+            'label' => 'Role',
+            'options' => [
+                'admin' => 'Admin',
+                'user' => 'User',
+                // Add other roles as needed
+            ],
+            'allows_null' => false,
+        ]);
+        CRUD::addField([
+            'name' => 'card_number',
+            'type' => 'text',
+            'label' => 'Card Number'
+        ]);
+      
     }
 
     /**
