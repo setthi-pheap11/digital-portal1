@@ -19,6 +19,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
+            'card_number' => 'nullable|string|max:16', // Assuming card number is a string
         ]);
 
         if ($validator->fails()) {
@@ -35,6 +36,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'card_number' => $request->card_number ?? null, // Optional field
             'role' => 'user', 
         ]);
 
@@ -74,6 +76,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
+            'card_number' => 'required|string|max:16', // Assuming card number is a string
         ]);
 
         if ($validator->fails()) {
@@ -91,6 +94,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'card_number' => $request->card_number,
             'role' => 'seller',
         ]);
 
